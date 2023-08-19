@@ -94,6 +94,24 @@ class Syvex {
     const regex = new RegExp(`^${pattern}$`);
     return regex.test(path);
   }
+
+  static json(options) {
+    return (req, res, next) => {
+      let body = '';
+      req.on('data', (chunk) => {
+        body += chunk.toString();
+      });
+
+      req.on('end', () => {
+        if (body) {
+          try {
+            req.body = JSON.parse(body);
+          } catch (error) {}
+        }
+        next();
+      });
+    };
+  }
 }
 
 module.exports = Syvex;

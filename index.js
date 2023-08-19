@@ -1,9 +1,7 @@
-const Syvex = require('./package/src/syvex');
-const app = new Syvex();
+const syvex = require('./package/src/syvex');
+const app = new syvex();
 
-app.use((req, res, next) => {
-  next();
-});
+app.use(syvex.json());
 
 app.get(
   '/',
@@ -16,6 +14,12 @@ app.get(
     res.end(req.greet);
   }
 );
+
+app.post('/giveme', (req, res) => {
+  console.log(req.body);
+
+  res.end(JSON.stringify(req.body));
+});
 
 // Handle dynamic route parameter :id
 app.get('/api/data/:id/:name', (req, res) => {
