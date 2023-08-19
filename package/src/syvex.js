@@ -1,7 +1,7 @@
 const http = require('http');
 const url = require('url');
 
-class NanoExpress {
+class Syvex {
   constructor() {
     this.routes = [];
   }
@@ -84,4 +84,4 @@ class NanoExpress {
   }
 }
 
-module.exports = NanoExpress;
+module.exports = Syvex;
