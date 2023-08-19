@@ -15,10 +15,9 @@ app.get(
   }
 );
 
-app.post('/giveme', (req, res) => {
-  console.log(req.body);
-
-  res.end(JSON.stringify(req.body));
+app.post('/giveme/:id', (req, res) => {
+  console.log(req.params.id);
+  syvex.sendJSON(res, req.body, 200);
 });
 
 // Handle dynamic route parameter :id
