@@ -6,10 +6,11 @@ app.get('/', (req, res) => {
   res.end('Hello, World!');
 });
 
-app.get('/api/data', (req, res) => {
-  res.writeHead(200, { 'Content-Type': 'application/json' });
-  const data = { message: 'This is some data from the API.' };
-  res.end(JSON.stringify(data));
+// Handle dynamic route parameter :id
+app.get('/api/data/:id', (req, res) => {
+  const resourceId = req.params.id;
+  res.writeHead(200, { 'Content-Type': 'text/plain' });
+  res.end(`Requested resource ID: ${resourceId}`);
 });
 
 app.listen(3000, () => {
