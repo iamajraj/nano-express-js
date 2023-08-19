@@ -1,6 +1,5 @@
-# Syvex - HTTP Web Framework
+# Syvex
 
-A basic Nodejs http web framework similar to a popular one ExpressJS
-
+A simple HTTP server with routing capabilities.
 
 ✨ this is a just another side project.
