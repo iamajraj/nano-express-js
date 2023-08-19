@@ -1,13 +1,11 @@
 const http = require('http');
 const url = require('url');
+const Methods = require('./methods');
 
-class NanoExpress {
+class NanoExpress extends Methods {
   constructor() {
+    super();
     this.routes = [];
-  }
-
-  get(path, handler) {
-    this.routes.push({ method: 'GET', path, handler });
   }
 
   listen(port, callback) {
@@ -29,7 +27,9 @@ class NanoExpress {
 
   findRoute(method, path) {
     return this.routes.find(
-      (route) => route.method === method && route.path === path
+      (route) =>
+        (route.method === method || route.method === 'ANY') &&
+        route.path === path
     );
   }
 }
