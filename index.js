@@ -1,16 +1,27 @@
 const Syvex = require('./package/src/syvex');
 const app = new Syvex();
 
-app.get('/', (req, res) => {
-  res.writeHead(200, { 'Content-Type': 'text/plain' });
-  res.end('Hello, World!');
+app.use((req, res, next) => {
+  next();
 });
 
+app.get(
+  '/',
+  (req, _, next) => {
+    req.greet = 'Hello World!';
+    next();
+  },
+  (req, res) => {
+    res.writeHead(200, { 'Content-Type': 'text/plain' });
+    res.end(req.greet);
+  }
+);
+
 // Handle dynamic route parameter :id
-app.get('/api/data/:id', (req, res) => {
+app.get('/api/data/:id/:name', (req, res) => {
   const resourceId = req.params.id;
   res.writeHead(200, { 'Content-Type': 'text/plain' });
-  res.end(`Requested resource ID: ${resourceId}`);
+  res.end(`Requested resource ID: ${resourceId}, ${req.params.name}`);
 });
 
 app.listen(3000, () => {

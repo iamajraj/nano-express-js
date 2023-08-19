@@ -1,68 +1,38 @@
 const http = require('http');
 const url = require('url');
 
-/**
- * Syvex - A simple HTTP server with routing capabilities.
- */
 class Syvex {
-  /** @type {Array<{ method: string, path: string, handler: function, paramNames: string[] }>} */
   #routes = [];
+  #globalMiddlewares = [];
 
-  /**
-   * Define a GET route.
-   * @param {string} path - The route path.
-   * @param {function} handler - The route handler function.
-   */
-  get(path, handler) {
-    this.#addRoute('GET', path, handler);
+  get(path, ...handlers) {
+    this.#addRoute('GET', path, handlers);
   }
 
-  /**
-   * Define a POST route.
-   * @param {string} path - The route path.
-   * @param {function} handler - The route handler function.
-   */
-  post(path, handler) {
-    this.#addRoute('POST', path, handler);
+  post(path, ...handlers) {
+    this.#addRoute('POST', path, handlers);
   }
 
-  /**
-   * Define a PUT route.
-   * @param {string} path - The route path.
-   * @param {function} handler - The route handler function.
-   */
-  put(path, handler) {
-    this.#addRoute('PUT', path, handler);
+  put(path, ...handlers) {
+    this.#addRoute('PUT', path, handlers);
   }
 
-  /**
-   * Define a DELETE route.
-   * @param {string} path - The route path.
-   * @param {function} handler - The route handler function.
-   */
-  delete(path, handler) {
-    this.#addRoute('DELETE', path, handler);
+  delete(path, ...handlers) {
+    this.#addRoute('DELETE', path, handlers);
   }
 
-  /**
-   * Add a route to the router.
-   * @param {string} method - The HTTP method.
-   * @param {string} path - The route path.
-   * @param {function} handler - The route handler function.
-   */
-  #addRoute(method, path, handler) {
+  use(middleware) {
+    this.#globalMiddlewares.push(middleware);
+  }
+
+  #addRoute(method, path, handlers) {
     const parsedPath = path.replace(/:[^/]+/g, '([^/]+)');
     const paramNames = (path.match(/:[^/]+/g) || []).map((param) =>
       param.slice(1)
     );
-    this.#routes.push({ method, path: parsedPath, handler, paramNames });
+    this.#routes.push({ method, path: parsedPath, handlers, paramNames });
   }
 
-  /**
-   * Handle incoming HTTP requests.
-   * @param {http.IncomingMessage} req - The incoming request object.
-   * @param {http.ServerResponse} res - The response object.
-   */
   #handleRequest(req, res) {
     const parsedUrl = url.parse(req.url, true);
     const route = this.#findRoute(req.method, parsedUrl.pathname);
@@ -74,26 +44,28 @@ class Syvex {
         parsedUrl.pathname,
         route.paramNames
       );
-      route.handler(req, res);
+
+      const middlewares = [...this.#globalMiddlewares, ...route.handlers];
+
+      const next = () => {
+        const middleware = middlewares.shift();
+        if (middleware) {
+          middleware(req, res, next);
+        }
+      };
+
+      next();
     } else {
       res.writeHead(404, { 'Content-Type': 'text/plain' });
       res.end('Not Found');
     }
   }
 
-  /**
-   * Extract route parameters from the URL.
-   * @param {string} routePath - The route path pattern.
-   * @param {string} pathname - The actual URL pathname.
-   * @param {string[]} paramNames - Names of dynamic route parameters.
-   * @returns {Object} An object containing the route parameters.
-   */
   #extractRouteParams(routePath, pathname, paramNames) {
     const paramValues = pathname.match(new RegExp(routePath));
-
     const params = {};
     if (paramValues) {
-      paramValues.shift(); // Remove the full match
+      paramValues.shift();
       paramValues.forEach((value, index) => {
         params[paramNames[index]] = value;
       });
@@ -101,11 +73,6 @@ class Syvex {
     return params;
   }
 
-  /**
-   * Start the HTTP server and listen on the specified port.
-   * @param {number} port - The port to listen on.
-   * @param {function} callback - The callback function to execute when the server starts.
-   */
   listen(port, callback) {
     const server = http.createServer((req, res) => {
       this.#handleRequest(req, res);
@@ -114,12 +81,6 @@ class Syvex {
     server.listen(port, callback);
   }
 
-  /**
-   * Find a matching route for the incoming request.
-   * @param {string} method - The HTTP method of the request.
-   * @param {string} path - The URL path of the request.
-   * @returns {Object|null} The matched route or null if no match is found.
-   */
   #findRoute(method, path) {
     const route = this.#routes.find(
       (route) =>
@@ -129,12 +90,6 @@ class Syvex {
     return route;
   }
 
-  /**
-   * Check if the given path matches the route pattern.
-   * @param {string} pattern - The route pattern.
-   * @param {string} path - The path to check.
-   * @returns {boolean} True if the path matches the pattern, false otherwise.
-   */
   #matchPath(pattern, path) {
     const regex = new RegExp(`^${pattern}$`);
     return regex.test(path);
