@@ -1,4 +1,5 @@
-# NanoExpress
+# Syvex - HTTP Web Framework
+
 A basic Nodejs http web framework similar to a popular one ExpressJS
 
 
