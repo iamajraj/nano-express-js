@@ -33,19 +33,18 @@ class Syvex {
     this.#routes.push({ method, path: parsedPath, handlers, paramNames });
   }
 
-  #handleRequest(req, res) {
-    const parsedUrl = url.parse(req.url, true);
-    const route = this.#findRoute(req.method, parsedUrl.pathname);
+  #handleRequest(_req, _res) {
+    const parsedUrl = url.parse(_req.url, true);
+    const route = this.#findRoute(_req.method, parsedUrl.pathname);
+
+    // custom response object
+    const res = new Response(_res);
 
     if (route) {
-      req.query = parsedUrl.query;
-      req.params = this.#extractRouteParams(
-        route.path,
-        parsedUrl.pathname,
-        route.paramNames
-      );
-
       const middlewares = [...this.#globalMiddlewares, ...route.handlers];
+
+      // custom request object
+      const req = new Request(_req, route);
 
       const next = () => {
         const middleware = middlewares.shift();
@@ -56,26 +55,13 @@ class Syvex {
 
       next();
     } else {
-      res.writeHead(404, { 'Content-Type': 'text/plain' });
-      res.end('Not Found');
+      res.status(400).send('Not found');
     }
-  }
-
-  #extractRouteParams(routePath, pathname, paramNames) {
-    const paramValues = pathname.match(new RegExp(routePath));
-    const params = {};
-    if (paramValues) {
-      paramValues.shift();
-      paramValues.forEach((value, index) => {
-        params[paramNames[index]] = value;
-      });
-    }
-    return params;
   }
 
   listen(port, callback) {
-    const server = http.createServer((req, res) => {
-      this.#handleRequest(req, res);
+    const server = http.createServer((_req, _res) => {
+      this.#handleRequest(_req, _res);
     });
 
     server.listen(port, callback);
@@ -112,11 +98,65 @@ class Syvex {
       });
     };
   }
+}
 
-  static sendJSON(res, data, status) {
-    res.statusCode = status;
-    res.setHeader('Content-Type', 'application/json');
-    res.end(JSON.stringify(data));
+class Request {
+  url;
+  method;
+  req;
+  params;
+  query;
+  #route;
+  constructor(req, route) {
+    this.url = req.url;
+    this.method = req.method;
+    this.req = req;
+    this.#route = route;
+
+    const parsedURL = url.parse(this.url, true);
+
+    this.query = parsedURL.query;
+    this.params = this.#extractRouteParams(
+      this.#route.path,
+      parsedURL.pathname,
+      this.#route.paramNames
+    );
+  }
+  on(event, callback) {
+    this.req.on(event, callback);
+  }
+
+  #extractRouteParams(routePath, pathname, paramNames) {
+    const paramValues = pathname.match(new RegExp(routePath));
+    const params = {};
+    if (paramValues) {
+      paramValues.shift();
+      paramValues.forEach((value, index) => {
+        params[paramNames[index]] = value;
+      });
+    }
+    return params;
+  }
+}
+
+class Response {
+  #res;
+  constructor(res) {
+    this.#res = res;
+    this.#res.setHeader('Content-Type', 'text/plain');
+  }
+  status(statusCode) {
+    this.#res.statusCode = statusCode;
+    return this;
+  }
+  send(data) {
+    this.#res.end(data);
+    return this;
+  }
+
+  json(data) {
+    this.#res.setHeader('Content-Type', 'application/json');
+    this.#res.end(JSON.stringify(data));
   }
 }
 

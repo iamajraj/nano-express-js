@@ -10,21 +10,23 @@ app.get(
     next();
   },
   (req, res) => {
-    res.writeHead(200, { 'Content-Type': 'text/plain' });
-    res.end(req.greet);
+    res.status(200).send(req.greet);
   }
 );
 
 app.post('/giveme/:id', (req, res) => {
-  console.log(req.params.id);
-  syvex.sendJSON(res, req.body, 200);
+  res.status(200).json({
+    id: Number(req.params.id),
+    ...req.body,
+  });
 });
 
 // Handle dynamic route parameter :id
 app.get('/api/data/:id/:name', (req, res) => {
   const resourceId = req.params.id;
-  res.writeHead(200, { 'Content-Type': 'text/plain' });
-  res.end(`Requested resource ID: ${resourceId}, ${req.params.name}`);
+  res
+    .status(200)
+    .send(`Requested resource ID: ${resourceId}, ${req.params.name}`);
 });
 
 app.listen(3000, () => {
