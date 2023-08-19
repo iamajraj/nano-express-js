@@ -1,5 +1,5 @@
-const NanoExpress = require('./package/src/nanoexpress');
-const app = new NanoExpress();
+const Syvex = require('./package/src/syvex');
+const app = new Syvex();
 
 app.get('/', (req, res) => {
   res.writeHead(200, { 'Content-Type': 'text/plain' });
