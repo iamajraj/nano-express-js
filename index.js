@@ -23,10 +23,9 @@ app.post('/giveme/:id', (req, res) => {
 
 // Handle dynamic route parameter :id
 app.get('/api/data/:id/:name', (req, res) => {
-  const resourceId = req.params.id;
   res
     .status(200)
-    .send(`Requested resource ID: ${resourceId}, ${req.params.name}`);
+    .send(`Requested resource ID: ${req.params.id}, ${req.params.name}`);
 });
 
 app.listen(3000, () => {
